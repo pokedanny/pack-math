@@ -23,8 +23,7 @@ export async function onRequest(context) {
 
     const res = await fetch(
       `https://api.tcgapi.dev/v1/pokemon/cards?search=${encodeURIComponent(query)}&limit=12`,
-      { headers: { Authorization: `Bearer ${env.TCGAPI_KEY}` } }
-    );
+{ headers: { Authorization: `Bearer ${env.TCGAPI_KEY}`, "x-api-key": env.TCGAPI_KEY } }    );
     const data = await res.json();
     return new Response(JSON.stringify(data), { headers });
   }
