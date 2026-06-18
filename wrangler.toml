@@ -1,0 +1,8 @@
+name = "pack-math"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "pack-math-db"
+database_id = "f64663d8-9e2c-488a-be7b-0c19de567a9c"
