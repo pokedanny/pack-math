@@ -83,9 +83,15 @@ const HoloCard = ({ card, onAdd, onRemove, inWishlist, compact = false }) => {
         fontSize: compact ? 18 : 24,
         flexShrink: 0,
       }}>
-        <span style={{ filter: "drop-shadow(0 0 6px rgba(201,168,76,0.6))" }}>
-          {card.image || "🃏"}
-        </span>
+{card.image_url ? (
+  <img
+    src={card.image_url}
+    alt={card.name}
+    style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 4 }}
+  />
+) : (
+  <span style={{ filter: "drop-shadow(0 0 6px rgba(201,168,76,0.6))" }}>🃏</span>
+)}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
