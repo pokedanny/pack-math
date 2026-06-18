@@ -21,9 +21,10 @@ export async function onRequest(context) {
     if (!query) return new Response(JSON.stringify([]), { headers });
     if (!env.TCGAPI_KEY) return new Response(JSON.stringify({ error: "No API key found" }), { headers });
 
-    const res = await fetch(
-      `https://api.tcgapi.dev/v1/pokemon/cards?search=${encodeURIComponent(query)}&limit=12`,
-{ headers: { Authorization: `Bearer ${env.TCGAPI_KEY}`, "x-api-key": env.TCGAPI_KEY } }    );
+const res = await fetch(
+  `https://api.tcgapi.dev/v1/search?q=${encodeURIComponent(query)}&game=pokemon&limit=12`,
+  { headers: { "X-API-Key": env.TCGAPI_KEY } }
+);
     const data = await res.json();
     return new Response(JSON.stringify(data), { headers });
   }
