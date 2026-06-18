@@ -23,8 +23,9 @@ export async function onRequest(context) {
       `https://api.tcgapi.dev/v1/pokemon/cards?search=${encodeURIComponent(query)}&limit=12`,
       { headers: { Authorization: `Bearer ${env.TCGAPI_KEY}` } }
     );
-    const data = await res.json();
-    return new Response(JSON.stringify(data), { headers });
+const data = await res.json();
+console.log("tcgapi response:", JSON.stringify(data).slice(0, 500));
+return new Response(JSON.stringify(data), { headers });
   }
 
   // Get wishlist
