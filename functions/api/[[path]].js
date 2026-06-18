@@ -19,6 +19,7 @@ export async function onRequest(context) {
   if (path === "/search" && request.method === "GET") {
     const query = url.searchParams.get("q");
     if (!query) return new Response(JSON.stringify([]), { headers });
+    if (!env.TCGAPI_KEY) return new Response(JSON.stringify({ error: "No API key found" }), { headers });
 
     const res = await fetch(
       `https://api.tcgapi.dev/v1/pokemon/cards?search=${encodeURIComponent(query)}&limit=12`,
