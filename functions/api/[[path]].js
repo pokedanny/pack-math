@@ -25,8 +25,18 @@ const res = await fetch(
   `https://api.tcgapi.dev/v1/search?q=${encodeURIComponent(query)}&game=pokemon&limit=12`,
   { headers: { "X-API-Key": env.TCGAPI_KEY } }
 );
-    const data = await res.json();
-    return new Response(JSON.stringify(data), { headers });
+const data = await res.json();
+const cards = (data.data || []).map(card => ({
+  id: String(card.id),
+  name: card.name,
+  set_name: card.set_name,
+  number: card.number,
+  price: card.market_price || card.low_price || 0,
+  rarity: card.rarity || "Unknown",
+  image: card.image_url ? "🃏" : "🃏",
+  image_url: card.image_url,
+}));
+return new Response(JSON.stringify(cards), { headers });
   }
 
   // Get wishlist
