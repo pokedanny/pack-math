@@ -1,7 +1,8 @@
 export async function onRequest(context) {
   const { request, env } = context;
   const url = new URL(request.url);
-  const path = url.pathname;
+  const fullPath = url.pathname;
+  const path = fullPath.replace(/^\/api/, "");
 
   const headers = {
     "Content-Type": "application/json",
@@ -15,7 +16,7 @@ export async function onRequest(context) {
   }
 
   // Search cards
-  if (path === "/api/search" && request.method === "GET") {
+  if (path === "/search" && request.method === "GET") {
     const query = url.searchParams.get("q");
     if (!query) return new Response(JSON.stringify([]), { headers });
 
@@ -23,19 +24,18 @@ export async function onRequest(context) {
       `https://api.tcgapi.dev/v1/pokemon/cards?search=${encodeURIComponent(query)}&limit=12`,
       { headers: { Authorization: `Bearer ${env.TCGAPI_KEY}` } }
     );
-const data = await res.json();
-console.log("tcgapi response:", JSON.stringify(data).slice(0, 500));
-return new Response(JSON.stringify(data), { headers });
+    const data = await res.json();
+    return new Response(JSON.stringify(data), { headers });
   }
 
   // Get wishlist
-  if (path === "/api/wishlist" && request.method === "GET") {
+  if (path === "/wishlist" && request.method === "GET") {
     const { results } = await env.DB.prepare("SELECT * FROM wishlist ORDER BY created_at DESC").all();
     return new Response(JSON.stringify(results), { headers });
   }
 
   // Add to wishlist
-  if (path === "/api/wishlist" && request.method === "POST") {
+  if (path === "/wishlist" && request.method === "POST") {
     const card = await request.json();
     await env.DB.prepare(
       "INSERT INTO wishlist (card_id, name, set_name, number, price, rarity, image) VALUES (?, ?, ?, ?, ?, ?, ?)"
@@ -44,20 +44,20 @@ return new Response(JSON.stringify(data), { headers });
   }
 
   // Delete from wishlist
-  if (path.startsWith("/api/wishlist/") && request.method === "DELETE") {
+  if (path.startsWith("/wishlist/") && request.method === "DELETE") {
     const id = path.split("/").pop();
     await env.DB.prepare("DELETE FROM wishlist WHERE id = ?").bind(id).run();
     return new Response(JSON.stringify({ success: true }), { headers });
   }
 
   // Get savings
-  if (path === "/api/savings" && request.method === "GET") {
+  if (path === "/savings" && request.method === "GET") {
     const { results } = await env.DB.prepare("SELECT * FROM savings ORDER BY created_at DESC").all();
     return new Response(JSON.stringify(results), { headers });
   }
 
   // Add savings
-  if (path === "/api/savings" && request.method === "POST") {
+  if (path === "/savings" && request.method === "POST") {
     const entry = await request.json();
     await env.DB.prepare(
       "INSERT INTO savings (amount, note) VALUES (?, ?)"
@@ -66,11 +66,11 @@ return new Response(JSON.stringify(data), { headers });
   }
 
   // Delete savings entry
-  if (path.startsWith("/api/savings/") && request.method === "DELETE") {
+  if (path.startsWith("/savings/") && request.method === "DELETE") {
     const id = path.split("/").pop();
     await env.DB.prepare("DELETE FROM savings WHERE id = ?").bind(id).run();
     return new Response(JSON.stringify({ success: true }), { headers });
   }
 
-  return new Response(JSON.stringify({ error: "Not found" }), { status: 404, headers });
+  return new Response(JSON.stringify({ error: "Not found", path }), { status: 404, headers });
 }
