@@ -20,15 +20,16 @@ export async function onRequest(context) {
     const query = url.searchParams.get("q");
     if (!query) return new Response(JSON.stringify([]), { headers });
 
-    const [nameRes, setRes] = await Promise.all([
-      fetch(`https://api.tcgapi.dev/v1/search?q=${encodeURIComponent(query)}&game=pokemon&limit=25`, { headers: { "X-API-Key": env.TCGAPI_KEY } }),
-      fetch(`https://api.tcgapi.dev/v1/search?q=${encodeURIComponent(query)}&game=pokemon&limit=25&set=${encodeURIComponent(query)}`, { headers: { "X-API-Key": env.TCGAPI_KEY } }),
-    ]);
+const [nameRes, exRes, gxRes] = await Promise.all([
+  fetch(`https://api.tcgapi.dev/v1/search?q=${encodeURIComponent(query)}&game=pokemon&limit=25`, { headers: { "X-API-Key": env.TCGAPI_KEY } }),
+  fetch(`https://api.tcgapi.dev/v1/search?q=${encodeURIComponent(query + " ex")}&game=pokemon&limit=25`, { headers: { "X-API-Key": env.TCGAPI_KEY } }),
+  fetch(`https://api.tcgapi.dev/v1/search?q=${encodeURIComponent(query + " gx")}&game=pokemon&limit=25`, { headers: { "X-API-Key": env.TCGAPI_KEY } }),
+]);
 
-    const [nameData, setData] = await Promise.all([nameRes.json(), setRes.json()]);
+const [nameData, exData, gxData] = await Promise.all([nameRes.json(), exRes.json(), gxRes.json()]);
 
     const seen = new Set();
-    const combined = [...(nameData.data || []), ...(setData.data || [])]
+const combined = [...(nameData.data || []), ...(exData.data || []), ...(gxData.data || [])]
       .filter(card => {
         if (card.product_type !== "Cards") return false;
         if (card.name.startsWith("Code Card")) return false;
