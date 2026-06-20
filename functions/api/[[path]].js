@@ -49,8 +49,8 @@ return new Response(JSON.stringify(cards), { headers });
   if (path === "/wishlist" && request.method === "POST") {
     const card = await request.json();
     await env.DB.prepare(
-      "INSERT INTO wishlist (card_id, name, set_name, number, price, rarity, image) VALUES (?, ?, ?, ?, ?, ?, ?)"
-    ).bind(card.id, card.name, card.set_name, card.number, card.price, card.rarity, card.image).run();
+"INSERT INTO wishlist (card_id, name, set_name, number, price, rarity, image, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+).bind(card.id, card.name, card.set_name, card.number, card.price, card.rarity, card.image, card.image_url).run();
     return new Response(JSON.stringify({ success: true }), { headers });
   }
 
