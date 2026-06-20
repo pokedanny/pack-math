@@ -27,7 +27,7 @@ const res = await fetch(
 );
 const data = await res.json();
 const cards = (data.data || [])
-  .filter(card => card.product_type === "Cards")
+.filter(card => card.product_type === "Cards" && !card.name.startsWith("Code Card"))
   .map(card => ({
   id: String(card.id),
   name: card.name,
