@@ -15,58 +15,39 @@ export async function onRequest(context) {
     return new Response(null, { headers });
   }
 
-if (path === "/search" && request.method === "GET") {
-  const query = url.searchParams.get("q");
-  if (!query) return new Response(JSON.stringify([]), { headers });
+  // Search cards
+  if (path === "/search" && request.method === "GET") {
+    const query = url.searchParams.get("q");
+    if (!query) return new Response(JSON.stringify([]), { headers });
 
-  const [nameRes, setRes] = await Promise.all([
-    fetch(`https://api.tcgapi.dev/v1/search?q=${encodeURIComponent(query)}&game=pokemon&limit=25`, { headers: { "X-API-Key": env.TCGAPI_KEY } }),
-    fetch(`https://api.tcgapi.dev/v1/search?q=${encodeURIComponent(query)}&game=pokemon&limit=25&set=${encodeURIComponent(query)}`, { headers: { "X-API-Key": env.TCGAPI_KEY } }),
-  ]);
+    const [nameRes, setRes] = await Promise.all([
+      fetch(`https://api.tcgapi.dev/v1/search?q=${encodeURIComponent(query)}&game=pokemon&limit=25`, { headers: { "X-API-Key": env.TCGAPI_KEY } }),
+      fetch(`https://api.tcgapi.dev/v1/search?q=${encodeURIComponent(query)}&game=pokemon&limit=25&set=${encodeURIComponent(query)}`, { headers: { "X-API-Key": env.TCGAPI_KEY } }),
+    ]);
 
-  const [nameData, setData] = await Promise.all([nameRes.json(), setRes.json()]);
+    const [nameData, setData] = await Promise.all([nameRes.json(), setRes.json()]);
 
-  const seen = new Set();
-  const combined = [...(nameData.data || []), ...(setData.data || [])]
-    .filter(card => {
-      if (card.product_type !== "Cards") return false;
-      if (card.name.startsWith("Code Card")) return false;
-      if (seen.has(card.id)) return false;
-      seen.add(card.id);
-      return true;
-    })
-    .map(card => ({
-      id: String(card.id),
-      name: card.name,
-      set_name: card.set_name,
-      number: card.number,
-      price: card.market_price || card.low_price || 0,
-      rarity: card.rarity || "Unknown",
-      image: "🃏",
-      image_url: card.image_url,
-    }));
+    const seen = new Set();
+    const combined = [...(nameData.data || []), ...(setData.data || [])]
+      .filter(card => {
+        if (card.product_type !== "Cards") return false;
+        if (card.name.startsWith("Code Card")) return false;
+        if (seen.has(card.id)) return false;
+        seen.add(card.id);
+        return true;
+      })
+      .map(card => ({
+        id: String(card.id),
+        name: card.name,
+        set_name: card.set_name,
+        number: card.number,
+        price: card.market_price || card.low_price || 0,
+        rarity: card.rarity || "Unknown",
+        image: "🃏",
+        image_url: card.image_url,
+      }));
 
-  return new Response(JSON.stringify(combined), { headers });
-}
-
-const res = await fetch(
-  `https://api.tcgapi.dev/v1/search?q=${encodeURIComponent(query)}&game=pokemon&limit=12`,
-  { headers: { "X-API-Key": env.TCGAPI_KEY } }
-);
-const data = await res.json();
-const cards = (data.data || [])
-.filter(card => card.product_type === "Cards" && !card.name.startsWith("Code Card"))
-  .map(card => ({
-  id: String(card.id),
-  name: card.name,
-  set_name: card.set_name,
-  number: card.number,
-  price: card.market_price || card.low_price || 0,
-  rarity: card.rarity || "Unknown",
-  image: card.image_url ? "🃏" : "🃏",
-  image_url: card.image_url,
-}));
-return new Response(JSON.stringify(cards), { headers });
+    return new Response(JSON.stringify(combined), { headers });
   }
 
   // Get wishlist
@@ -79,8 +60,8 @@ return new Response(JSON.stringify(cards), { headers });
   if (path === "/wishlist" && request.method === "POST") {
     const card = await request.json();
     await env.DB.prepare(
-"INSERT INTO wishlist (card_id, name, set_name, number, price, rarity, image, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-).bind(card.id, card.name, card.set_name, card.number, card.price, card.rarity, card.image, card.image_url).run();
+      "INSERT INTO wishlist (card_id, name, set_name, number, price, rarity, image, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+    ).bind(card.id, card.name, card.set_name, card.number, card.price, card.rarity, card.image, card.image_url).run();
     return new Response(JSON.stringify({ success: true }), { headers });
   }
 
@@ -112,6 +93,3 @@ return new Response(JSON.stringify(cards), { headers });
     await env.DB.prepare("DELETE FROM savings WHERE id = ?").bind(id).run();
     return new Response(JSON.stringify({ success: true }), { headers });
   }
-
-  return new Response(JSON.stringify({ error: "Not found", path }), { status: 404, headers });
-}
