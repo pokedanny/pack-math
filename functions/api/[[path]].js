@@ -93,3 +93,6 @@ export async function onRequest(context) {
     await env.DB.prepare("DELETE FROM savings WHERE id = ?").bind(id).run();
     return new Response(JSON.stringify({ success: true }), { headers });
   }
+
+  return new Response(JSON.stringify({ error: "Not found", path }), { status: 404, headers });
+}
