@@ -15,11 +15,39 @@ export async function onRequest(context) {
     return new Response(null, { headers });
   }
 
-  // Search cards
-  if (path === "/search" && request.method === "GET") {
-    const query = url.searchParams.get("q");
-    if (!query) return new Response(JSON.stringify([]), { headers });
-    if (!env.TCGAPI_KEY) return new Response(JSON.stringify({ error: "No API key found" }), { headers });
+if (path === "/search" && request.method === "GET") {
+  const query = url.searchParams.get("q");
+  if (!query) return new Response(JSON.stringify([]), { headers });
+
+  const [nameRes, setRes] = await Promise.all([
+    fetch(`https://api.tcgapi.dev/v1/search?q=${encodeURIComponent(query)}&game=pokemon&limit=25`, { headers: { "X-API-Key": env.TCGAPI_KEY } }),
+    fetch(`https://api.tcgapi.dev/v1/search?q=${encodeURIComponent(query)}&game=pokemon&limit=25&set=${encodeURIComponent(query)}`, { headers: { "X-API-Key": env.TCGAPI_KEY } }),
+  ]);
+
+  const [nameData, setData] = await Promise.all([nameRes.json(), setRes.json()]);
+
+  const seen = new Set();
+  const combined = [...(nameData.data || []), ...(setData.data || [])]
+    .filter(card => {
+      if (card.product_type !== "Cards") return false;
+      if (card.name.startsWith("Code Card")) return false;
+      if (seen.has(card.id)) return false;
+      seen.add(card.id);
+      return true;
+    })
+    .map(card => ({
+      id: String(card.id),
+      name: card.name,
+      set_name: card.set_name,
+      number: card.number,
+      price: card.market_price || card.low_price || 0,
+      rarity: card.rarity || "Unknown",
+      image: "🃏",
+      image_url: card.image_url,
+    }));
+
+  return new Response(JSON.stringify(combined), { headers });
+}
 
 const res = await fetch(
   `https://api.tcgapi.dev/v1/search?q=${encodeURIComponent(query)}&game=pokemon&limit=12`,
