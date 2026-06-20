@@ -231,6 +231,7 @@ const WishlistPage = ({ wishlist, setWishlist }) => {
   const [error, setError] = useState(null);
   const [showSearch, setShowSearch] = useState(true);
   const [sortBy, setSortBy] = useState("default");
+  const [filterRarity, setFilterRarity] = useState("all");
   const [emptyQuip] = useState(SNARKY_EMPTY[Math.floor(Math.random() * SNARKY_EMPTY.length)]);
 
   const search = async () => {
@@ -331,24 +332,50 @@ const WishlistPage = ({ wishlist, setWishlist }) => {
             <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(240,237,232,0.3)", fontFamily: "Inter, sans-serif", letterSpacing: "0.08em", marginBottom: 14 }}>
               {results.length === 0 ? "NO RESULTS" : `${results.length} CARDS FOUND`}
             </div>
-            {results.length > 0 && (
-  <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-    {[
-      { id: "default", label: "Default" },
-      { id: "price_high", label: "Price ↓" },
-      { id: "price_low", label: "Price ↑" },
-      { id: "rarity", label: "Rarity" },
-      { id: "name", label: "A–Z" },
-    ].map(opt => (
-      <button key={opt.id} onClick={() => setSortBy(opt.id)} style={{
-        background: sortBy === opt.id ? "rgba(201,168,76,0.15)" : "rgba(10,10,15,0.5)",
-        border: `1px solid ${sortBy === opt.id ? "rgba(201,168,76,0.5)" : "rgba(255,255,255,0.08)"}`,
-        color: sortBy === opt.id ? "#C9A84C" : "rgba(240,237,232,0.4)",
-        borderRadius: 6, padding: "5px 12px", cursor: "pointer",
+{results.length > 0 && (
+  <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
+    <div style={{ display: "flex", gap: 8 }}>
+      {[
+        { id: "default", label: "Default" },
+        { id: "price_high", label: "Price ↓" },
+        { id: "price_low", label: "Price ↑" },
+        { id: "name", label: "A–Z" },
+      ].map(opt => (
+        <button key={opt.id} onClick={() => setSortBy(opt.id)} style={{
+          background: sortBy === opt.id ? "rgba(201,168,76,0.15)" : "rgba(10,10,15,0.5)",
+          border: `1px solid ${sortBy === opt.id ? "rgba(201,168,76,0.5)" : "rgba(255,255,255,0.08)"}`,
+          color: sortBy === opt.id ? "#C9A84C" : "rgba(240,237,232,0.4)",
+          borderRadius: 6, padding: "5px 12px", cursor: "pointer",
+          fontSize: 11, fontFamily: "Inter, sans-serif", fontWeight: 600,
+          transition: "all 0.2s", letterSpacing: "0.04em",
+        }}>{opt.label}</button>
+      ))}
+    </div>
+    <select
+      onChange={e => setFilterRarity(e.target.value)}
+      style={{
+        background: "rgba(10,10,15,0.8)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: 6, padding: "5px 12px",
+        color: "rgba(240,237,232,0.6)",
         fontSize: 11, fontFamily: "Inter, sans-serif", fontWeight: 600,
-        transition: "all 0.2s", letterSpacing: "0.04em",
-      }}>{opt.label}</button>
-    ))}
+        cursor: "pointer", outline: "none",
+      }}
+    >
+      <option value="all">All Rarities</option>
+      <option value="Special Illustration Rare">SIR</option>
+      <option value="Illustration Rare">IR</option>
+      <option value="Hyper Rare">Hyper Rare</option>
+      <option value="Alternate Art Secret">Alt Art</option>
+      <option value="Secret Rare">Secret Rare</option>
+      <option value="Ultra Rare">Ultra Rare</option>
+      <option value="Shiny Holo Rare">Shiny Holo</option>
+      <option value="Holo Rare">Holo Rare</option>
+      <option value="Rare">Rare</option>
+      <option value="Uncommon">Uncommon</option>
+      <option value="Common">Common</option>
+      <option value="Promo">Promo</option>
+    </select>
   </div>
 )}
             {results.length === 0 ? (
@@ -361,7 +388,7 @@ const WishlistPage = ({ wishlist, setWishlist }) => {
                 gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
                 gap: 16,
               }}>
-{[...results].sort((a, b) => {
+{[...results].filter(card => filterRarity === "all" || card.rarity === filterRarity).sort((a, b) => {
   const RARITY_RANK = {
     "Special Illustration Rare": 1, "Hyper Rare": 2, "Alternate Art Secret": 3,
     "Secret Rare": 4, "Ultra Rare": 5, "Illustration Rare": 6,
