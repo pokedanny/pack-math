@@ -26,7 +26,9 @@ const res = await fetch(
   { headers: { "X-API-Key": env.TCGAPI_KEY } }
 );
 const data = await res.json();
-const cards = (data.data || []).map(card => ({
+const cards = (data.data || [])
+  .filter(card => card.product_type === "Cards")
+  .map(card => ({
   id: String(card.id),
   name: card.name,
   set_name: card.set_name,
