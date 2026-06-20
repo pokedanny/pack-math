@@ -22,11 +22,16 @@ const SAVINGS_QUIPS = [
 ];
 
 const RARITY_COLORS = {
-  "Special Illustration Rare": { bg: "rgba(201,168,76,0.15)", border: "#C9A84C", label: "SIR" },
-  "Illustration Rare": { bg: "rgba(78,205,196,0.15)", border: "#4ECDC4", label: "IR" },
-  "Hyper Rare": { bg: "rgba(255,120,80,0.15)", border: "#FF7850", label: "HR" },
-  "Alternate Art Secret": { bg: "rgba(180,100,255,0.15)", border: "#B464FF", label: "ALT" },
-  "default": { bg: "rgba(78,205,196,0.15)", border: "#4ECDC4", label: "CARD" },
+  "Special Illustration Rare": { bg: "rgba(201,168,76,0.15)", border: "#C9A84C", glow: "rgba(201,168,76,0.4)", label: "SIR" },
+  "Illustration Rare": { bg: "rgba(78,205,196,0.15)", border: "#4ECDC4", glow: "rgba(78,205,196,0.4)", label: "IR" },
+  "Hyper Rare": { bg: "rgba(255,120,80,0.15)", border: "#FF7850", glow: "rgba(255,120,80,0.4)", label: "HR" },
+  "Alternate Art Secret": { bg: "rgba(180,100,255,0.15)", border: "#B464FF", glow: "rgba(180,100,255,0.4)", label: "ALT" },
+  "Secret Rare": { bg: "rgba(180,100,255,0.15)", border: "#B464FF", glow: "rgba(180,100,255,0.4)", label: "SECRET" },
+  "Ultra Rare": { bg: "rgba(201,168,76,0.15)", border: "#C9A84C", glow: "rgba(201,168,76,0.4)", label: "UR" },
+  "Holo Rare": { bg: "rgba(78,205,196,0.12)", border: "#4ECDC4", glow: "rgba(78,205,196,0.3)", label: "HOLO" },
+  "Shiny Holo Rare": { bg: "rgba(180,100,255,0.15)", border: "#B464FF", glow: "rgba(180,100,255,0.4)", label: "SHINY" },
+  "Rare": { bg: "rgba(78,205,196,0.08)", border: "#4ECDC4", glow: "rgba(78,205,196,0.2)", label: "RARE" },
+  "default": { bg: "rgba(255,255,255,0.04)", border: "rgba(255,255,255,0.15)", glow: "rgba(255,255,255,0.1)", label: "CARD" },
 };
 
 const getRarity = (card) => RARITY_COLORS[card.rarity] || RARITY_COLORS["default"];
@@ -41,7 +46,7 @@ const PokeBall = ({ size = 20, color = "#C9A84C" }) => (
   </svg>
 );
 
-const HoloCard = ({ card, onAdd, onRemove, inWishlist, compact = false }) => {
+const CardTile = ({ card, onAdd, onRemove, inWishlist }) => {
   const [hovered, setHovered] = useState(false);
   const rarity = getRarity(card);
 
@@ -50,83 +55,140 @@ const HoloCard = ({ card, onAdd, onRemove, inWishlist, compact = false }) => {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: hovered
-          ? `linear-gradient(135deg, ${rarity.bg}, rgba(30,30,46,0.95))`
-          : "rgba(30,30,46,0.8)",
-        border: `1px solid ${hovered ? rarity.border : "rgba(255,255,255,0.06)"}`,
-        borderRadius: 12,
-        padding: compact ? "12px 14px" : "16px",
-        display: "flex",
-        alignItems: "center",
-        gap: 14,
-        transition: "all 0.25s ease",
-        position: "relative",
+        background: hovered ? `linear-gradient(160deg, ${rarity.bg}, rgba(20,20,35,0.98))` : "rgba(20,20,35,0.9)",
+        border: `1px solid ${hovered ? rarity.border : "rgba(255,255,255,0.07)"}`,
+        borderRadius: 14,
         overflow: "hidden",
+        transition: "all 0.3s ease",
+        transform: hovered ? "translateY(-4px)" : "translateY(0)",
+        boxShadow: hovered ? `0 12px 40px ${rarity.glow}, 0 0 0 1px ${rarity.border}` : "0 2px 8px rgba(0,0,0,0.4)",
+        cursor: "default",
+        position: "relative",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
+      {/* Holo shimmer overlay */}
       {hovered && (
         <div style={{
-          position: "absolute", inset: 0, pointerEvents: "none",
-          background: "linear-gradient(105deg, transparent 40%, rgba(201,168,76,0.04) 50%, transparent 60%)",
-          animation: "shimmer 1.5s infinite",
+          position: "absolute", inset: 0, pointerEvents: "none", zIndex: 2,
+          background: "linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.04) 50%, transparent 70%)",
+          animation: "shimmer 2s infinite",
         }} />
       )}
+
+      {/* Card image area */}
       <div style={{
-        width: compact ? 40 : 52,
-        height: compact ? 56 : 72,
-        borderRadius: 6,
-        background: `linear-gradient(135deg, ${rarity.bg}, rgba(15,15,25,0.9))`,
-        border: `1px solid ${rarity.border}`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: compact ? 18 : 24,
-        flexShrink: 0,
+        width: "100%",
+        paddingTop: "139%",
+        position: "relative",
+        background: `linear-gradient(160deg, rgba(30,30,50,0.8), rgba(10,10,20,0.9))`,
+        overflow: "hidden",
       }}>
-{card.image_url ? (
-  <img
-    src={card.image_url}
-    alt={card.name}
-    style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 4 }}
-  />
-) : (
-  <span style={{ filter: "drop-shadow(0 0 6px rgba(201,168,76,0.6))" }}>🃏</span>
-)}
+        {card.image_url ? (
+          <img
+            src={card.image_url}
+            alt={card.name}
+            style={{
+              position: "absolute", inset: 0, width: "100%", height: "100%",
+              objectFit: "cover",
+              transition: "transform 0.4s ease",
+              transform: hovered ? "scale(1.04)" : "scale(1)",
+            }}
+          />
+        ) : (
+          <div style={{
+            position: "absolute", inset: 0, display: "flex",
+            alignItems: "center", justifyContent: "center", fontSize: 48,
+          }}>🃏</div>
+        )}
+
+        {/* Rarity badge */}
+        <div style={{
+          position: "absolute", top: 8, right: 8, zIndex: 3,
+          fontSize: 9, fontWeight: 800, color: rarity.border,
+          background: "rgba(10,10,15,0.85)",
+          border: `1px solid ${rarity.border}`,
+          padding: "3px 7px", borderRadius: 4,
+          letterSpacing: "0.06em",
+          backdropFilter: "blur(4px)",
+          fontFamily: "Inter, sans-serif",
+        }}>{rarity.label}</div>
+
+        {/* Wishlist indicator */}
+        {inWishlist && (
+          <div style={{
+            position: "absolute", top: 8, left: 8, zIndex: 3,
+            fontSize: 14,
+            filter: "drop-shadow(0 0 4px rgba(201,168,76,0.8))",
+          }}>⭐</div>
+        )}
+
+        {/* Price tag */}
+        <div style={{
+          position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 3,
+          background: "linear-gradient(transparent, rgba(10,10,15,0.95))",
+          padding: "24px 10px 8px",
+        }}>
+          <div style={{
+            fontFamily: "Inter, sans-serif",
+            fontSize: 16, fontWeight: 800,
+            color: parseFloat(card.price) === 0 ? "rgba(240,237,232,0.3)" : "#4ECDC4",
+            letterSpacing: "-0.02em",
+            lineHeight: 1,
+          }}>
+            {parseFloat(card.price) > 0 ? `$${parseFloat(card.price).toFixed(2)}` : "—"}
+          </div>
+          <div style={{
+            fontSize: 9, color: "rgba(78,205,196,0.45)",
+            fontFamily: "Inter, sans-serif", fontWeight: 500, marginTop: 2,
+          }}>NM MARKET</div>
+        </div>
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-          <span style={{
-            fontSize: compact ? 13 : 14, fontWeight: 700, color: "#F0EDE8",
-            fontFamily: "Inter, sans-serif", whiteSpace: "nowrap",
-            overflow: "hidden", textOverflow: "ellipsis",
-          }}>{card.name}</span>
-          <span style={{
-            fontSize: 9, fontWeight: 700, color: rarity.border,
-            background: rarity.bg, border: `1px solid ${rarity.border}`,
-            padding: "1px 5px", borderRadius: 3, letterSpacing: "0.05em", flexShrink: 0,
-          }}>{rarity.label}</span>
-        </div>
-        <div style={{ fontSize: 11, color: "rgba(240,237,232,0.4)", fontFamily: "Inter, sans-serif", marginBottom: 4 }}>
-          {card.set_name} · {card.number}
-        </div>
-        <div style={{ fontSize: compact ? 13 : 15, fontWeight: 700, color: "#4ECDC4", fontFamily: "Inter, sans-serif", letterSpacing: "-0.02em" }}>
-          ${parseFloat(card.price).toFixed(2)}
-          <span style={{ fontSize: 10, color: "rgba(78,205,196,0.5)", fontWeight: 400, marginLeft: 4 }}>NM · Verified</span>
-        </div>
+
+      {/* Card info */}
+      <div style={{ padding: "10px 12px 12px", flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+        <div style={{
+          fontSize: 12, fontWeight: 700, color: "#F0EDE8",
+          fontFamily: "Inter, sans-serif",
+          lineHeight: 1.3,
+          display: "-webkit-box",
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical",
+          overflow: "hidden",
+        }}>{card.name}</div>
+
+        <div style={{
+          fontSize: 10, color: "rgba(240,237,232,0.35)",
+          fontFamily: "Inter, sans-serif",
+          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+        }}>{card.set_name}</div>
+
+        {card.number && (
+          <div style={{
+            fontSize: 10, color: "rgba(240,237,232,0.2)",
+            fontFamily: "Inter, sans-serif",
+          }}>#{card.number}</div>
+        )}
+
+        {/* Action button */}
+        <button
+          onClick={() => inWishlist ? onRemove(card.id) : onAdd(card)}
+          style={{
+            marginTop: "auto",
+            paddingTop: 8,
+            background: inWishlist ? "rgba(255,80,80,0.1)" : `rgba(201,168,76,0.1)`,
+            border: `1px solid ${inWishlist ? "rgba(255,80,80,0.3)" : "rgba(201,168,76,0.25)"}`,
+            color: inWishlist ? "#FF5050" : "#C9A84C",
+            borderRadius: 8, padding: "8px 0", cursor: "pointer",
+            fontSize: 11, fontWeight: 700, fontFamily: "Inter, sans-serif",
+            transition: "all 0.2s", width: "100%",
+            letterSpacing: "0.04em",
+          }}
+        >
+          {inWishlist ? "✕ REMOVE" : "+ WISHLIST"}
+        </button>
       </div>
-      <button
-        onClick={() => inWishlist ? onRemove(card.id) : onAdd(card)}
-        style={{
-          background: inWishlist ? "rgba(255,80,80,0.1)" : "rgba(201,168,76,0.1)",
-          border: `1px solid ${inWishlist ? "rgba(255,80,80,0.3)" : "rgba(201,168,76,0.3)"}`,
-          color: inWishlist ? "#FF5050" : "#C9A84C",
-          borderRadius: 8, padding: "8px 12px", cursor: "pointer",
-          fontSize: 12, fontWeight: 700, fontFamily: "Inter, sans-serif",
-          transition: "all 0.2s", flexShrink: 0, whiteSpace: "nowrap",
-        }}
-      >
-        {inWishlist ? "Remove" : "+ Wishlist"}
-      </button>
     </div>
   );
 };
@@ -167,6 +229,8 @@ const WishlistPage = ({ wishlist, setWishlist }) => {
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showSearch, setShowSearch] = useState(true);
+  const [sortBy, setSortBy] = useState("default");
   const [emptyQuip] = useState(SNARKY_EMPTY[Math.floor(Math.random() * SNARKY_EMPTY.length)]);
 
   const search = async () => {
@@ -176,7 +240,7 @@ const WishlistPage = ({ wishlist, setWishlist }) => {
     try {
       const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
       const data = await res.json();
-      setResults(Array.isArray(data) ? data : data.cards || data.data || []);
+      setResults(Array.isArray(data) ? data : []);
       setSearched(true);
     } catch (e) {
       setError("Search failed. Try again.");
@@ -208,83 +272,149 @@ const WishlistPage = ({ wishlist, setWishlist }) => {
     }
   };
 
-  const totalValue = wishlist.reduce((sum, c) => sum + parseFloat(c.price), 0);
+  const totalValue = wishlist.reduce((sum, c) => sum + parseFloat(c.price || 0), 0);
 
   return (
-    <div style={{ maxWidth: 680, margin: "0 auto", padding: "32px 24px" }}>
-      <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 48, color: "#F0EDE8", letterSpacing: "0.04em", margin: 0, lineHeight: 1 }}>YOUR WISHLIST</h1>
-        <p style={{ fontFamily: "Inter, sans-serif", fontSize: 14, color: "rgba(240,237,232,0.4)", margin: "8px 0 0" }}>
-          Build it here. Stop building it out of pack luck.
-        </p>
+    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px" }}>
+
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 28 }}>
+        <div>
+          <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 48, color: "#F0EDE8", letterSpacing: "0.04em", margin: 0, lineHeight: 1 }}>YOUR WISHLIST</h1>
+          <p style={{ fontFamily: "Inter, sans-serif", fontSize: 14, color: "rgba(240,237,232,0.4)", margin: "8px 0 0" }}>
+            Build it here. Stop building it out of pack luck.
+          </p>
+        </div>
+        {wishlist.length > 0 && (
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, color: "#4ECDC4", letterSpacing: "0.02em", lineHeight: 1 }}>
+              ${totalValue.toFixed(2)}
+            </div>
+            <div style={{ fontSize: 11, color: "rgba(78,205,196,0.5)", fontFamily: "Inter, sans-serif", marginTop: 2 }}>
+              {wishlist.length} card{wishlist.length !== 1 ? "s" : ""} · total value
+            </div>
+          </div>
+        )}
       </div>
 
-      <div style={{ background: "rgba(30,30,46,0.6)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: 20, marginBottom: 28 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(201,168,76,0.7)", fontFamily: "Inter, sans-serif", letterSpacing: "0.08em", marginBottom: 12 }}>SEARCH CARDS</div>
+      {/* Search bar */}
+      <div style={{ background: "rgba(20,20,35,0.8)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: 20, marginBottom: 32 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(201,168,76,0.6)", fontFamily: "Inter, sans-serif", letterSpacing: "0.08em", marginBottom: 12 }}>
+          SEARCH CARDS
+        </div>
         <div style={{ display: "flex", gap: 10 }}>
           <input
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={e => e.key === "Enter" && search()}
-            placeholder="Umbreon ex, Evolving Skies, SIR..."
+            placeholder='Try "Umbreon ex SIR", "Glaceon VMAX", "Prismatic Evolutions"...'
             style={{
               flex: 1, background: "rgba(10,10,15,0.8)", border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: 8, padding: "11px 14px", color: "#F0EDE8", fontSize: 14,
+              borderRadius: 10, padding: "12px 16px", color: "#F0EDE8", fontSize: 14,
               fontFamily: "Inter, sans-serif", outline: "none",
             }}
           />
           <button onClick={search} style={{
-            background: "linear-gradient(135deg, #C9A84C, #A8853A)", border: "none",
-            borderRadius: 8, padding: "11px 20px", color: "#0A0A0F",
+            background: loading ? "rgba(201,168,76,0.2)" : "linear-gradient(135deg, #C9A84C, #A8853A)",
+            border: "none", borderRadius: 10, padding: "12px 24px", color: loading ? "#C9A84C" : "#0A0A0F",
             fontSize: 13, fontWeight: 700, fontFamily: "Inter, sans-serif",
-            cursor: "pointer", letterSpacing: "0.04em",
-          }}>{loading ? "..." : "SEARCH"}</button>
+            cursor: "pointer", letterSpacing: "0.04em", minWidth: 100,
+            transition: "all 0.2s",
+          }}>{loading ? "SEARCHING..." : "SEARCH"}</button>
         </div>
 
         {error && <div style={{ color: "#FF5050", fontSize: 12, fontFamily: "Inter, sans-serif", marginTop: 10 }}>{error}</div>}
 
+        {/* Search results grid */}
         {searched && !loading && (
-          <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ marginTop: 20 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(240,237,232,0.3)", fontFamily: "Inter, sans-serif", letterSpacing: "0.08em", marginBottom: 14 }}>
+              {results.length === 0 ? "NO RESULTS" : `${results.length} CARDS FOUND`}
+            </div>
+            {results.length > 0 && (
+  <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+    {[
+      { id: "default", label: "Default" },
+      { id: "price_high", label: "Price ↓" },
+      { id: "price_low", label: "Price ↑" },
+      { id: "rarity", label: "Rarity" },
+      { id: "name", label: "A–Z" },
+    ].map(opt => (
+      <button key={opt.id} onClick={() => setSortBy(opt.id)} style={{
+        background: sortBy === opt.id ? "rgba(201,168,76,0.15)" : "rgba(10,10,15,0.5)",
+        border: `1px solid ${sortBy === opt.id ? "rgba(201,168,76,0.5)" : "rgba(255,255,255,0.08)"}`,
+        color: sortBy === opt.id ? "#C9A84C" : "rgba(240,237,232,0.4)",
+        borderRadius: 6, padding: "5px 12px", cursor: "pointer",
+        fontSize: 11, fontFamily: "Inter, sans-serif", fontWeight: 600,
+        transition: "all 0.2s", letterSpacing: "0.04em",
+      }}>{opt.label}</button>
+    ))}
+  </div>
+)}
             {results.length === 0 ? (
-              <div style={{ color: "rgba(240,237,232,0.35)", fontFamily: "Inter, sans-serif", fontSize: 13, padding: "8px 0" }}>
-                No cards found. Try another name or set.
+              <div style={{ color: "rgba(240,237,232,0.3)", fontFamily: "Inter, sans-serif", fontSize: 13 }}>
+                No cards found. Try a different name or set.
               </div>
-            ) : results.map(card => (
-              <HoloCard
-                key={card.id}
-                card={card}
-                onAdd={addToWishlist}
-                onRemove={removeFromWishlist}
-                inWishlist={!!wishlist.find(c => c.id === card.id)}
-                compact
-              />
-            ))}
+            ) : (
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+                gap: 16,
+              }}>
+{[...results].sort((a, b) => {
+  const RARITY_RANK = {
+    "Special Illustration Rare": 1, "Hyper Rare": 2, "Alternate Art Secret": 3,
+    "Secret Rare": 4, "Ultra Rare": 5, "Illustration Rare": 6,
+    "Shiny Holo Rare": 7, "Holo Rare": 8, "Rare": 9, "default": 10,
+  };
+  if (sortBy === "price_high") return parseFloat(b.price) - parseFloat(a.price);
+  if (sortBy === "price_low") return parseFloat(a.price) - parseFloat(b.price);
+  if (sortBy === "rarity") return (RARITY_RANK[a.rarity] || 10) - (RARITY_RANK[b.rarity] || 10);
+  if (sortBy === "name") return a.name.localeCompare(b.name);
+  return 0;
+}).map(card => (
+                  <CardTile
+                    key={card.id}
+                    card={card}
+                    onAdd={addToWishlist}
+                    onRemove={removeFromWishlist}
+                    inWishlist={!!wishlist.find(c => c.id === card.id)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
 
+      {/* Wishlist grid */}
       {wishlist.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "60px 24px", border: "1px dashed rgba(255,255,255,0.08)", borderRadius: 16 }}>
-          <div style={{ fontSize: 40, marginBottom: 16 }}>🃏</div>
-          <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, color: "rgba(240,237,232,0.3)", letterSpacing: "0.06em", marginBottom: 8 }}>NOTHING HERE YET</div>
-          <div style={{ fontFamily: "Inter, sans-serif", fontSize: 13, color: "rgba(240,237,232,0.25)" }}>{emptyQuip}</div>
+        <div style={{ textAlign: "center", padding: "80px 24px", border: "1px dashed rgba(255,255,255,0.06)", borderRadius: 20 }}>
+          <div style={{ fontSize: 52, marginBottom: 20 }}>🃏</div>
+          <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, color: "rgba(240,237,232,0.2)", letterSpacing: "0.06em", marginBottom: 10 }}>NOTHING HERE YET</div>
+          <div style={{ fontFamily: "Inter, sans-serif", fontSize: 14, color: "rgba(240,237,232,0.2)" }}>{emptyQuip}</div>
         </div>
       ) : (
-        <>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 16 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(240,237,232,0.4)", fontFamily: "Inter, sans-serif", letterSpacing: "0.08em" }}>
-              {wishlist.length} CARD{wishlist.length !== 1 ? "S" : ""} SAVED
-            </div>
-            <div style={{ fontFamily: "Inter, sans-serif", fontSize: 13, color: "#4ECDC4", fontWeight: 600 }}>
-              Total value: ${totalValue.toFixed(2)}
-            </div>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(240,237,232,0.3)", fontFamily: "Inter, sans-serif", letterSpacing: "0.08em", marginBottom: 16 }}>
+            YOUR COLLECTION TARGET
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+            gap: 20,
+          }}>
             {wishlist.map(card => (
-              <HoloCard key={card.id} card={card} onAdd={() => {}} onRemove={removeFromWishlist} inWishlist={true} />
+              <CardTile
+                key={card.id}
+                card={card}
+                onAdd={() => {}}
+                onRemove={removeFromWishlist}
+                inWishlist={true}
+              />
             ))}
           </div>
-        </>
+        </div>
       )}
     </div>
   );
@@ -308,7 +438,7 @@ const CalculatorPage = ({ wishlist }) => {
     const packEquiv = Math.floor(budget / PACK_PRICES[packType].price);
     let remaining = budget;
     let selected = [];
-    let sorted = [...wishlist].sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+    let sorted = [...wishlist].filter(c => parseFloat(c.price) > 0).sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
     for (let card of sorted) {
       if (parseFloat(card.price) <= remaining) {
         selected.push(card);
@@ -332,7 +462,7 @@ const CalculatorPage = ({ wishlist }) => {
         </p>
       </div>
 
-      <div style={{ background: "rgba(30,30,46,0.6)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: 24, marginBottom: 24 }}>
+      <div style={{ background: "rgba(20,20,35,0.8)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: 24, marginBottom: 24 }}>
         <div style={{ marginBottom: 20 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(201,168,76,0.7)", fontFamily: "Inter, sans-serif", letterSpacing: "0.08em", marginBottom: 10 }}>WHAT WERE YOU ABOUT TO BUY?</div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -389,34 +519,39 @@ const CalculatorPage = ({ wishlist }) => {
           </div>
 
           {wishlist.length === 0 ? (
-            <div style={{ background: "rgba(30,30,46,0.6)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "32px", textAlign: "center" }}>
+            <div style={{ background: "rgba(20,20,35,0.8)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "32px", textAlign: "center" }}>
               <div style={{ fontSize: 32, marginBottom: 12 }}>🙃</div>
               <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, color: "rgba(240,237,232,0.4)", letterSpacing: "0.04em" }}>ADD CARDS TO YOUR WISHLIST FIRST</div>
             </div>
           ) : result.selected.length === 0 ? (
-            <div style={{ background: "rgba(30,30,46,0.6)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "32px", textAlign: "center" }}>
+            <div style={{ background: "rgba(20,20,35,0.8)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "32px", textAlign: "center" }}>
               <div style={{ fontSize: 32, marginBottom: 12 }}>💸</div>
               <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, color: "rgba(240,237,232,0.4)", letterSpacing: "0.04em" }}>NOT QUITE ENOUGH</div>
               <div style={{ fontFamily: "Inter, sans-serif", fontSize: 13, color: "rgba(240,237,232,0.25)", marginTop: 8 }}>Save it to the Card Vault instead.</div>
             </div>
           ) : (
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 14 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 16 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(78,205,196,0.7)", fontFamily: "Inter, sans-serif", letterSpacing: "0.08em" }}>INSTEAD, YOU COULD OWN:</div>
                 {parseFloat(result.remaining) > 0 && (
                   <div style={{ fontSize: 12, color: "rgba(240,237,232,0.35)", fontFamily: "Inter, sans-serif" }}>${result.remaining} left over</div>
                 )}
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+                gap: 16,
+                marginBottom: 20,
+              }}>
                 {result.selected.map(card => (
-                  <div key={card.id} style={{ position: "relative" }}>
-                    <HoloCard card={card} onAdd={() => {}} onRemove={() => {}} inWishlist={false} compact />
-                    <a
-                      href={`https://www.tcgplayer.com/search/pokemon/product?q=${encodeURIComponent(card.name)}&utm_source=packmathapp`}
-                      target="_blank" rel="noopener noreferrer"
-                      style={{ position: "absolute", right: 14, bottom: 12, fontSize: 11, color: "#4ECDC4", fontFamily: "Inter, sans-serif", fontWeight: 600, textDecoration: "none", opacity: 0.7 }}
-                    >Buy on TCGPlayer →</a>
-                  </div>
+                  <a
+                    key={card.id}
+                    href={`https://www.tcgplayer.com/search/pokemon/product?q=${encodeURIComponent(card.name)}&utm_source=packmathapp`}
+                    target="_blank" rel="noopener noreferrer"
+                    style={{ textDecoration: "none" }}
+                  >
+                    <CardTile card={card} onAdd={() => {}} onRemove={() => {}} inWishlist={false} />
+                  </a>
                 ))}
               </div>
               <div style={{ background: "rgba(78,205,196,0.06)", border: "1px solid rgba(78,205,196,0.15)", borderRadius: 10, padding: "14px 18px", fontFamily: "Inter, sans-serif", fontSize: 13, color: "rgba(78,205,196,0.8)", display: "flex", gap: 10, alignItems: "center" }}>
@@ -474,7 +609,7 @@ const SavingsPage = ({ savings, setSavings }) => {
         <p style={{ fontFamily: "Inter, sans-serif", fontSize: 14, color: "rgba(240,237,232,0.4)", margin: "8px 0 0" }}>{SAVINGS_QUIPS[quipIndex]}</p>
       </div>
 
-      <div style={{ background: "linear-gradient(135deg, rgba(78,205,196,0.08), rgba(30,30,46,0.8))", border: "1px solid rgba(78,205,196,0.2)", borderRadius: 16, padding: "28px 24px", marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div style={{ background: "linear-gradient(135deg, rgba(78,205,196,0.08), rgba(20,20,35,0.9))", border: "1px solid rgba(78,205,196,0.2)", borderRadius: 16, padding: "28px 24px", marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(78,205,196,0.5)", fontFamily: "Inter, sans-serif", letterSpacing: "0.08em", marginBottom: 6 }}>VAULT BALANCE</div>
           <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 52, color: "#4ECDC4", letterSpacing: "-0.02em", lineHeight: 1 }}>${total.toFixed(2)}</div>
@@ -485,7 +620,7 @@ const SavingsPage = ({ savings, setSavings }) => {
         <div style={{ fontSize: 48, opacity: 0.4 }}>🏦</div>
       </div>
 
-      <div style={{ background: "rgba(30,30,46,0.6)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: 24, marginBottom: 24 }}>
+      <div style={{ background: "rgba(20,20,35,0.8)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: 24, marginBottom: 24 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(201,168,76,0.7)", fontFamily: "Inter, sans-serif", letterSpacing: "0.08em", marginBottom: 16 }}>LOG MONEY SAVED</div>
         <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
           <div style={{ position: "relative", flex: 1 }}>
@@ -521,7 +656,7 @@ const SavingsPage = ({ savings, setSavings }) => {
           <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(240,237,232,0.3)", fontFamily: "Inter, sans-serif", letterSpacing: "0.08em", marginBottom: 12 }}>SAVED HISTORY</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {savings.map(entry => (
-              <div key={entry.id} style={{ background: "rgba(30,30,46,0.5)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 10, padding: "13px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <div key={entry.id} style={{ background: "rgba(20,20,35,0.8)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 10, padding: "13px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ECDC4", flexShrink: 0, boxShadow: "0 0 6px rgba(78,205,196,0.5)" }} />
                   <div>
