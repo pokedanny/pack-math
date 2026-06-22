@@ -687,11 +687,11 @@ const GoalsPage = ({ goals, setGoals, savings, setSavings }) => {
                 boxShadow: complete ? "0 0 30px rgba(201,168,76,0.15)" : "none",
                 transition: "all 0.3s",
               }}>
-                <div style={{ position: "relative", width: "100%", paddingTop: "56%", overflow: "hidden" }}>
+                <div style={{ position: "relative", width: "100%", paddingTop: "120%", overflow: "hidden" }}>
                   {goal.image_url ? (
                     <img src={goal.image_url} alt={goal.name} style={{
                       position: "absolute", inset: 0, width: "100%", height: "100%",
-                      objectFit: "cover", objectPosition: "top",
+                      objectFit: "cover", objectPosition: "center",
                     }} />
                   ) : (
                     <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48 }}>🃏</div>
