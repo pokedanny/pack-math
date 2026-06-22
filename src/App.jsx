@@ -46,7 +46,7 @@ const PokeBall = ({ size = 20, color = "#C9A84C" }) => (
   </svg>
 );
 
-const CardTile = ({ card, onAdd, onRemove, inWishlist }) => {
+const CardTile = ({ card, onAdd, onRemove, inWishlist, onGoal }) => {
   const [hovered, setHovered] = useState(false);
   const rarity = getRarity(card);
 
@@ -186,8 +186,23 @@ const CardTile = ({ card, onAdd, onRemove, inWishlist }) => {
             letterSpacing: "0.04em",
           }}
         >
-          {inWishlist ? "✕ REMOVE" : "+ WISHLIST"}
+{inWishlist ? "✕ REMOVE" : "+ WISHLIST"}
         </button>
+        {inWishlist && onGoal && (
+          <button
+            onClick={() => onGoal(card)}
+            style={{
+              background: "rgba(78,205,196,0.08)",
+              border: "1px solid rgba(78,205,196,0.2)",
+              color: "#4ECDC4",
+              borderRadius: 8, padding: "8px 0", cursor: "pointer",
+              fontSize: 11, fontWeight: 700, fontFamily: "Inter, sans-serif",
+              transition: "all 0.2s", width: "100%", letterSpacing: "0.04em",
+            }}
+          >
+            🎯 SAVE UP
+          </button>
+        )}
       </div>
     </div>
   );
@@ -208,7 +223,9 @@ const Nav = ({ page, setPage, wishlistCount }) => (
       {[
         { id: "wishlist", label: `Wishlist${wishlistCount > 0 ? ` (${wishlistCount})` : ""}` },
         { id: "calculator", label: "Pack Math" },
+        { id: "goals", label: "Goals" },
         { id: "savings", label: "Card Vault" },
+        { id: "goals", label: "Goals" },
       ].map(tab => (
         <button key={tab.id} onClick={() => setPage(tab.id)} style={{
           background: page === tab.id ? "rgba(201,168,76,0.15)" : "transparent",
@@ -264,6 +281,17 @@ const WishlistPage = ({ wishlist, setWishlist }) => {
     }
   };
 
+  const addToGoals = async (card) => {
+  try {
+    await fetch("/api/goals", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(card),
+    });
+  } catch (e) {
+    console.error("Failed to add goal", e);
+  }
+};
   const removeFromWishlist = async (id) => {
     try {
       await fetch(`/api/wishlist/${id}`, { method: "DELETE" });
@@ -431,15 +459,16 @@ const WishlistPage = ({ wishlist, setWishlist }) => {
             gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
             gap: 20,
           }}>
-            {wishlist.map(card => (
-              <CardTile
-                key={card.id}
-                card={card}
-                onAdd={() => {}}
-                onRemove={removeFromWishlist}
-                inWishlist={true}
-              />
-            ))}
+{wishlist.map(card => (
+  <CardTile
+    key={card.id}
+    card={card}
+    onAdd={() => {}}
+    onRemove={removeFromWishlist}
+    onGoal={addToGoals}
+    inWishlist={true}
+  />
+))}
           </div>
         </div>
       )}
@@ -592,6 +621,185 @@ const CalculatorPage = ({ wishlist }) => {
     </div>
   );
 };
+const GoalsPage = ({ goals, setGoals, savings, setSavings }) => {
+  const [depositAmounts, setDepositAmounts] = useState({});
+
+  useEffect(() => {
+    fetch("/api/goals").then(r => r.json()).then(setGoals).catch(console.error);
+  }, []);
+
+  const removeGoal = async (id) => {
+    try {
+      await fetch(`/api/goals/${id}`, { method: "DELETE" });
+      setGoals(prev => prev.filter(g => g.id !== id));
+    } catch (e) {
+      console.error("Failed to remove goal", e);
+    }
+  };
+
+  const depositToGoal = async (goal) => {
+    const amount = parseFloat(depositAmounts[goal.id]);
+    if (!amount || amount <= 0) return;
+    try {
+      await fetch(`/api/goals/${goal.id}/deposit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount }),
+      });
+      setGoals(prev => prev.map(g =>
+        g.id === goal.id ? { ...g, saved_amount: parseFloat(g.saved_amount) + amount } : g
+      ));
+      setDepositAmounts(prev => ({ ...prev, [goal.id]: "" }));
+    } catch (e) {
+      console.error("Failed to deposit", e);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px" }}>
+      <div style={{ marginBottom: 32 }}>
+        <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 48, color: "#F0EDE8", letterSpacing: "0.04em", margin: 0, lineHeight: 1 }}>GOALS</h1>
+        <p style={{ fontFamily: "Inter, sans-serif", fontSize: 14, color: "rgba(240,237,232,0.4)", margin: "8px 0 0" }}>
+          Pick your targets. Save with intention. Skip the packs.
+        </p>
+      </div>
+
+      {goals.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "80px 24px", border: "1px dashed rgba(255,255,255,0.06)", borderRadius: 20 }}>
+          <div style={{ fontSize: 52, marginBottom: 20 }}>🎯</div>
+          <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, color: "rgba(240,237,232,0.2)", letterSpacing: "0.06em", marginBottom: 10 }}>NO GOALS YET</div>
+          <div style={{ fontFamily: "Inter, sans-serif", fontSize: 14, color: "rgba(240,237,232,0.2)" }}>Go to your wishlist and hit SAVE UP on a card.</div>
+        </div>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 24 }}>
+          {goals.map(goal => {
+            const saved = parseFloat(goal.saved_amount) || 0;
+            const target = parseFloat(goal.price) || 0;
+            const progress = target > 0 ? Math.min((saved / target) * 100, 100) : 0;
+            const complete = progress >= 100;
+            const rarity = RARITY_COLORS[goal.rarity] || RARITY_COLORS["default"];
+
+            return (
+              <div key={goal.id} style={{
+                background: complete ? "rgba(201,168,76,0.08)" : "rgba(20,20,35,0.9)",
+                border: `1px solid ${complete ? "rgba(201,168,76,0.4)" : "rgba(255,255,255,0.07)"}`,
+                borderRadius: 16,
+                overflow: "hidden",
+                boxShadow: complete ? "0 0 30px rgba(201,168,76,0.15)" : "none",
+                transition: "all 0.3s",
+              }}>
+                <div style={{ position: "relative", width: "100%", paddingTop: "56%", overflow: "hidden" }}>
+                  {goal.image_url ? (
+                    <img src={goal.image_url} alt={goal.name} style={{
+                      position: "absolute", inset: 0, width: "100%", height: "100%",
+                      objectFit: "cover", objectPosition: "top",
+                    }} />
+                  ) : (
+                    <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48 }}>🃏</div>
+                  )}
+                  <div style={{
+                    position: "absolute", inset: 0,
+                    background: "linear-gradient(transparent 40%, rgba(10,10,15,0.95))",
+                  }} />
+                  {complete && (
+                    <div style={{
+                      position: "absolute", top: 12, right: 12,
+                      background: "rgba(201,168,76,0.9)", borderRadius: 8,
+                      padding: "4px 10px", fontSize: 11, fontWeight: 800,
+                      fontFamily: "Inter, sans-serif", color: "#0A0A0F",
+                      letterSpacing: "0.06em",
+                    }}>READY TO BUY</div>
+                  )}
+                  <div style={{ position: "absolute", bottom: 12, left: 14, right: 14 }}>
+                    <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, color: "#F0EDE8", letterSpacing: "0.04em", lineHeight: 1.2 }}>{goal.name}</div>
+                    <div style={{ fontSize: 11, color: "rgba(240,237,232,0.5)", fontFamily: "Inter, sans-serif", marginTop: 2 }}>{goal.set_name}</div>
+                  </div>
+                </div>
+
+                <div style={{ padding: "16px 16px 20px" }}>
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                      <span style={{ fontSize: 12, fontFamily: "Inter, sans-serif", color: "#4ECDC4", fontWeight: 700 }}>
+                        ${saved.toFixed(2)} saved
+                      </span>
+                      <span style={{ fontSize: 12, fontFamily: "Inter, sans-serif", color: "rgba(240,237,232,0.4)" }}>
+                        ${target.toFixed(2)} goal
+                      </span>
+                    </div>
+                    <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: 999, height: 8, overflow: "hidden" }}>
+                      <div style={{
+                        height: "100%", borderRadius: 999,
+                        width: `${progress}%`,
+                        background: complete
+                          ? "linear-gradient(90deg, #C9A84C, #F0D080)"
+                          : "linear-gradient(90deg, #4ECDC4, #3AB5AD)",
+                        transition: "width 0.5s ease",
+                        boxShadow: complete ? "0 0 8px rgba(201,168,76,0.6)" : "0 0 8px rgba(78,205,196,0.4)",
+                      }} />
+                    </div>
+                    <div style={{ fontSize: 11, color: "rgba(240,237,232,0.3)", fontFamily: "Inter, sans-serif", marginTop: 4 }}>
+                      {complete ? "You earned this. Now go buy it." : `$${(target - saved).toFixed(2)} to go · ${progress.toFixed(0)}% there`}
+                    </div>
+                  </div>
+
+                  {!complete && (
+                    <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                      <div style={{ position: "relative", flex: 1 }}>
+                        <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "rgba(240,237,232,0.3)", fontFamily: "Inter, sans-serif", fontSize: 13 }}>$</span>
+                        <input
+                          value={depositAmounts[goal.id] || ""}
+                          onChange={e => setDepositAmounts(prev => ({ ...prev, [goal.id]: e.target.value.replace(/[^0-9.]/g, "") }))}
+                          placeholder="0.00"
+                          style={{
+                            width: "100%", background: "rgba(10,10,15,0.8)",
+                            border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8,
+                            padding: "9px 10px 9px 22px", color: "#F0EDE8",
+                            fontSize: 13, fontFamily: "Inter, sans-serif",
+                            outline: "none", boxSizing: "border-box",
+                          }}
+                        />
+                      </div>
+                      <button onClick={() => depositToGoal(goal)} style={{
+                        background: "linear-gradient(135deg, #4ECDC4, #3AB5AD)",
+                        border: "none", borderRadius: 8, padding: "9px 14px",
+                        color: "#0A0A0F", fontSize: 11, fontWeight: 800,
+                        fontFamily: "'Bebas Neue', sans-serif", cursor: "pointer",
+                        letterSpacing: "0.06em", whiteSpace: "nowrap",
+                      }}>ADD FUNDS</button>
+                    </div>
+                  )}
+
+                  {complete && (
+                    <a
+                      href={`https://www.tcgplayer.com/search/pokemon/product?q=${encodeURIComponent(goal.name)}&utm_source=packmathapp`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: "block", textAlign: "center", textDecoration: "none",
+                        background: "linear-gradient(135deg, #C9A84C, #A8853A)",
+                        borderRadius: 8, padding: "10px 0",
+                        color: "#0A0A0F", fontSize: 12, fontWeight: 800,
+                        fontFamily: "'Bebas Neue', sans-serif", letterSpacing: "0.08em",
+                        marginBottom: 10,
+                      }}
+                    >BUY ON TCGPLAYER</a>
+                  )}
+
+                  <button onClick={() => removeGoal(goal.id)} style={{
+                    background: "transparent", border: "none",
+                    color: "rgba(240,237,232,0.2)", cursor: "pointer",
+                    fontSize: 11, fontFamily: "Inter, sans-serif",
+                    width: "100%", padding: "4px 0",
+                  }}>remove goal</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const SavingsPage = ({ savings, setSavings }) => {
   const [depositAmount, setDepositAmount] = useState("");
@@ -710,10 +918,12 @@ export default function App() {
   const [page, setPage] = useState("wishlist");
   const [wishlist, setWishlist] = useState([]);
   const [savings, setSavings] = useState([]);
+  const [goals, setGoals] = useState([]);
 
   useEffect(() => {
     fetch("/api/wishlist").then(r => r.json()).then(setWishlist).catch(console.error);
     fetch("/api/savings").then(r => r.json()).then(setSavings).catch(console.error);
+    fetch("/api/goals").then(r => r.json()).then(setGoals).catch(console.error);
   }, []);
 
   return (
@@ -734,6 +944,7 @@ export default function App() {
       {page === "wishlist" && <WishlistPage wishlist={wishlist} setWishlist={setWishlist} />}
       {page === "calculator" && <CalculatorPage wishlist={wishlist} />}
       {page === "savings" && <SavingsPage savings={savings} setSavings={setSavings} />}
+      {page === "goals" && <GoalsPage goals={goals} setGoals={setGoals} savings={savings} setSavings={setSavings} />}
     </div>
   );
 }

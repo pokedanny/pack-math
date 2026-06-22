@@ -95,5 +95,36 @@ const combined = [...(nameData.data || []), ...(exData.data || []), ...(gxData.d
     return new Response(JSON.stringify({ success: true }), { headers });
   }
 
+  // Get goals
+  if (path === "/goals" && request.method === "GET") {
+    const { results } = await env.DB.prepare("SELECT * FROM goals ORDER BY created_at DESC").all();
+    return new Response(JSON.stringify(results), { headers });
+  }
+
+  // Add goal
+  if (path === "/goals" && request.method === "POST") {
+    const card = await request.json();
+    const existing = await env.DB.prepare("SELECT id FROM goals WHERE card_id = ?").bind(card.id).first();
+    if (existing) return new Response(JSON.stringify({ success: true, existing: true }), { headers });
+    await env.DB.prepare(
+      "INSERT INTO goals (card_id, name, set_name, number, price, rarity, image, image_url, saved_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)"
+    ).bind(card.id, card.name, card.set_name, card.number, card.price, card.rarity, card.image, card.image_url).run();
+    return new Response(JSON.stringify({ success: true }), { headers });
+  }
+
+  // Add savings to goal
+  if (path.startsWith("/goals/") && path.endsWith("/deposit") && request.method === "POST") {
+    const id = path.split("/")[2];
+    const { amount } = await request.json();
+    await env.DB.prepare("UPDATE goals SET saved_amount = saved_amount + ? WHERE id = ?").bind(amount, id).run();
+    return new Response(JSON.stringify({ success: true }), { headers });
+  }
+
+  // Delete goal
+  if (path.startsWith("/goals/") && request.method === "DELETE") {
+    const id = path.split("/").pop();
+    await env.DB.prepare("DELETE FROM goals WHERE id = ?").bind(id).run();
+    return new Response(JSON.stringify({ success: true }), { headers });
+  }
   return new Response(JSON.stringify({ error: "Not found", path }), { status: 404, headers });
 }
