@@ -799,7 +799,83 @@ const GoalsPage = ({ goals, setGoals, savings, setSavings }) => {
     </div>
   );
 };
+const SavingsEntry = ({ entry, assignedGoal, goals, onWithdraw, onAssign }) => {
+  const [assigning, setAssigning] = useState(false);
+  const [selectedGoal, setSelectedGoal] = useState("");
 
+  return (
+    <div style={{ background: "rgba(20,20,35,0.8)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 10, padding: "13px 16px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{
+            width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
+            background: assignedGoal ? "#C9A84C" : "#4ECDC4",
+            boxShadow: assignedGoal ? "0 0 6px rgba(201,168,76,0.5)" : "0 0 6px rgba(78,205,196,0.5)",
+          }} />
+          <div>
+            <div style={{ fontFamily: "Inter, sans-serif", fontSize: 13, color: "rgba(240,237,232,0.7)", marginBottom: 2 }}>{entry.note}</div>
+            <div style={{ fontFamily: "Inter, sans-serif", fontSize: 11, color: "rgba(240,237,232,0.25)" }}>
+              {new Date(entry.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+              {assignedGoal && (
+                <span style={{ color: "#C9A84C", marginLeft: 6 }}>→ {assignedGoal.name}</span>
+              )}
+            </div>
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ fontFamily: "Inter, sans-serif", fontSize: 16, fontWeight: 700, color: "#4ECDC4", letterSpacing: "-0.02em" }}>
+            +${parseFloat(entry.amount).toFixed(2)}
+          </div>
+          {!assignedGoal && goals && goals.length > 0 && (
+            <button
+              onClick={() => setAssigning(!assigning)}
+              style={{
+                background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.2)",
+                color: "#C9A84C", borderRadius: 6, padding: "4px 8px",
+                cursor: "pointer", fontSize: 10, fontFamily: "Inter, sans-serif",
+                fontWeight: 700, letterSpacing: "0.04em",
+              }}
+            >ASSIGN</button>
+          )}
+          <button onClick={() => onWithdraw(entry.id)} style={{ background: "transparent", border: "none", color: "rgba(240,237,232,0.2)", cursor: "pointer", fontSize: 16, padding: 4, lineHeight: 1 }}>×</button>
+        </div>
+      </div>
+      {assigning && (
+        <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+          <select
+            value={selectedGoal}
+            onChange={e => setSelectedGoal(e.target.value)}
+            style={{
+              flex: 1, background: "rgba(10,10,15,0.8)",
+              border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8,
+              padding: "8px 12px", color: selectedGoal ? "#F0EDE8" : "rgba(240,237,232,0.3)",
+              fontSize: 12, fontFamily: "Inter, sans-serif", outline: "none",
+            }}
+          >
+            <option value="">Pick a goal...</option>
+            {goals.map(g => (
+              <option key={g.id} value={g.id}>{g.name} — ${parseFloat(g.price).toFixed(2)}</option>
+            ))}
+          </select>
+          <button
+            onClick={() => {
+              if (!selectedGoal) return;
+              onAssign(entry.id, parseInt(selectedGoal), parseFloat(entry.amount));
+              setAssigning(false);
+            }}
+            style={{
+              background: "linear-gradient(135deg, #C9A84C, #A8853A)",
+              border: "none", borderRadius: 8, padding: "8px 14px",
+              color: "#0A0A0F", fontSize: 11, fontWeight: 800,
+              fontFamily: "'Bebas Neue', sans-serif", cursor: "pointer",
+              letterSpacing: "0.06em",
+            }}
+          >CONFIRM</button>
+        </div>
+      )}
+    </div>
+  );
+};
 const SavingsPage = ({ savings, setSavings, goals, setGoals }) => {
   const [depositAmount, setDepositAmount] = useState("");
   const [depositNote, setDepositNote] = useState("");
@@ -915,23 +991,33 @@ const deposit = async () => {
         <div>
           <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(240,237,232,0.3)", fontFamily: "Inter, sans-serif", letterSpacing: "0.08em", marginBottom: 12 }}>SAVED HISTORY</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {savings.map(entry => (
-              <div key={entry.id} style={{ background: "rgba(20,20,35,0.8)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 10, padding: "13px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ECDC4", flexShrink: 0, boxShadow: "0 0 6px rgba(78,205,196,0.5)" }} />
-                  <div>
-                    <div style={{ fontFamily: "Inter, sans-serif", fontSize: 13, color: "rgba(240,237,232,0.7)", marginBottom: 2 }}>{entry.note}</div>
-                    <div style={{ fontFamily: "Inter, sans-serif", fontSize: 11, color: "rgba(240,237,232,0.25)" }}>
-                      {new Date(entry.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                    </div>
-                  </div>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ fontFamily: "Inter, sans-serif", fontSize: 16, fontWeight: 700, color: "#4ECDC4", letterSpacing: "-0.02em" }}>+${parseFloat(entry.amount).toFixed(2)}</div>
-                  <button onClick={() => withdraw(entry.id)} style={{ background: "transparent", border: "none", color: "rgba(240,237,232,0.2)", cursor: "pointer", fontSize: 16, padding: 4, lineHeight: 1 }}>×</button>
-                </div>
-              </div>
-            ))}
+            {savings.map(entry => {
+  const assignedGoal = goals && goals.find(g => g.id === entry.goal_id);
+  return (
+    <SavingsEntry
+      key={entry.id}
+      entry={entry}
+      assignedGoal={assignedGoal}
+      goals={goals}
+      onWithdraw={withdraw}
+      onAssign={async (entryId, goalId, amount) => {
+        try {
+          await fetch(`/api/savings/${entryId}/assign`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ goal_id: goalId, amount }),
+          });
+          setSavings(prev => prev.map(e => e.id === entryId ? { ...e, goal_id: goalId } : e));
+          setGoals(prev => prev.map(g =>
+            g.id === goalId ? { ...g, saved_amount: parseFloat(g.saved_amount) + amount } : g
+          ));
+        } catch (e) {
+          console.error("Failed to assign", e);
+        }
+      }}
+    />
+  );
+})}
           </div>
         </div>
       )}

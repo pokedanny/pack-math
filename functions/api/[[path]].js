@@ -93,6 +93,15 @@ const combined = [...(nameData.data || []), ...(exData.data || []), ...(gxData.d
     return new Response(JSON.stringify({ success: true }), { headers });
   }
 
+// Assign savings to goal
+  if (path.startsWith("/savings/") && path.endsWith("/assign") && request.method === "POST") {
+    const id = path.split("/")[2];
+    const { goal_id, amount } = await request.json();
+    await env.DB.prepare("UPDATE savings SET goal_id = ? WHERE id = ?").bind(goal_id, id).run();
+    await env.DB.prepare("UPDATE goals SET saved_amount = saved_amount + ? WHERE id = ?").bind(amount, goal_id).run();
+    return new Response(JSON.stringify({ success: true }), { headers });
+  }
+
   // Delete savings entry
   if (path.startsWith("/savings/") && request.method === "DELETE") {
     const id = path.split("/").pop();
