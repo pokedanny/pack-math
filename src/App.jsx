@@ -691,7 +691,7 @@ const GoalsPage = ({ goals, setGoals, savings, setSavings }) => {
                   {goal.image_url ? (
                     <img src={goal.image_url} alt={goal.name} style={{
                       position: "absolute", inset: 0, width: "100%", height: "100%",
-                      objectFit: "cover", objectPosition: "center",
+                      objectFit: "contain", objectPosition: "center",
                     }} />
                   ) : (
                     <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48 }}>🃏</div>
