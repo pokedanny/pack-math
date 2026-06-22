@@ -225,7 +225,6 @@ const Nav = ({ page, setPage, wishlistCount }) => (
         { id: "calculator", label: "Pack Math" },
         { id: "goals", label: "Goals" },
         { id: "savings", label: "Card Vault" },
-        { id: "goals", label: "Goals" },
       ].map(tab => (
         <button key={tab.id} onClick={() => setPage(tab.id)} style={{
           background: page === tab.id ? "rgba(201,168,76,0.15)" : "transparent",
