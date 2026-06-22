@@ -800,25 +800,33 @@ const GoalsPage = ({ goals, setGoals, savings, setSavings }) => {
   );
 };
 
-const SavingsPage = ({ savings, setSavings }) => {
+const SavingsPage = ({ savings, setSavings, goals, setGoals }) => {
   const [depositAmount, setDepositAmount] = useState("");
   const [depositNote, setDepositNote] = useState("");
+  const [selectedGoal, setSelectedGoal] = useState("");
   const [quipIndex] = useState(Math.floor(Math.random() * SAVINGS_QUIPS.length));
 
-  const deposit = async () => {
+const deposit = async () => {
     const amt = parseFloat(depositAmount);
     if (!amt || amt <= 0) return;
     const note = depositNote || `Didn't buy ${Math.floor(amt / 4.99)} packs`;
+    const goal_id = selectedGoal ? parseInt(selectedGoal) : null;
     try {
       await fetch("/api/savings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: amt, note }),
+        body: JSON.stringify({ amount: amt, note, goal_id }),
       });
-      const entry = { id: Date.now(), amount: amt, note, created_at: new Date().toISOString() };
+      const entry = { id: Date.now(), amount: amt, note, goal_id, created_at: new Date().toISOString() };
       setSavings(prev => [entry, ...prev]);
+      if (goal_id) {
+        setGoals(prev => prev.map(g =>
+          g.id === goal_id ? { ...g, saved_amount: parseFloat(g.saved_amount) + amt } : g
+        ));
+      }
       setDepositAmount("");
       setDepositNote("");
+      setSelectedGoal("");
     } catch (e) {
       console.error("Failed to save entry", e);
     }
@@ -874,6 +882,24 @@ const SavingsPage = ({ savings, setSavings }) => {
           placeholder="What did you skip? (optional)"
           style={{ width: "100%", background: "rgba(10,10,15,0.5)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8, padding: "9px 12px", color: "rgba(240,237,232,0.5)", fontSize: 13, fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box" }}
         />
+        <select
+          value={selectedGoal}
+          onChange={e => setSelectedGoal(e.target.value)}
+          style={{
+            width: "100%", background: "rgba(10,10,15,0.8)",
+            border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8,
+            padding: "9px 12px", color: selectedGoal ? "#F0EDE8" : "rgba(240,237,232,0.3)",
+            fontSize: 13, fontFamily: "Inter, sans-serif", outline: "none",
+            boxSizing: "border-box", marginTop: 8,
+          }}
+        >
+          <option value="">Assign to a goal (optional)</option>
+          {goals && goals.length > 0
+            ? goals.map(g => (
+                <option key={g.id} value={g.id}>{g.name} — ${parseFloat(g.price).toFixed(2)}</option>
+              ))
+            : null}
+        </select>
         <div style={{ fontSize: 11, color: "rgba(240,237,232,0.2)", fontFamily: "Inter, sans-serif", marginTop: 8 }}>
           Girl math applies — money not spent on packs is money you actually have.
         </div>
@@ -942,7 +968,7 @@ export default function App() {
       <Nav page={page} setPage={setPage} wishlistCount={wishlist.length} />
       {page === "wishlist" && <WishlistPage wishlist={wishlist} setWishlist={setWishlist} />}
       {page === "calculator" && <CalculatorPage wishlist={wishlist} />}
-      {page === "savings" && <SavingsPage savings={savings} setSavings={setSavings} />}
+      {page === "savings" && <SavingsPage savings={savings} setSavings={setSavings} goals={goals} setGoals={setGoals} />}
       {page === "goals" && <GoalsPage goals={goals} setGoals={setGoals} savings={savings} setSavings={setSavings} />}
     </div>
   );

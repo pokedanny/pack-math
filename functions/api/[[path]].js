@@ -83,8 +83,13 @@ const combined = [...(nameData.data || []), ...(exData.data || []), ...(gxData.d
   if (path === "/savings" && request.method === "POST") {
     const entry = await request.json();
     await env.DB.prepare(
-      "INSERT INTO savings (amount, note) VALUES (?, ?)"
-    ).bind(entry.amount, entry.note).run();
+      "INSERT INTO savings (amount, note, goal_id) VALUES (?, ?, ?)"
+    ).bind(entry.amount, entry.note, entry.goal_id || null).run();
+    if (entry.goal_id) {
+      await env.DB.prepare(
+        "UPDATE goals SET saved_amount = saved_amount + ? WHERE id = ?"
+      ).bind(entry.amount, entry.goal_id).run();
+    }
     return new Response(JSON.stringify({ success: true }), { headers });
   }
 
